@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import tensorflow as tf
-from tensorflow.keras.models import load_model  # Using the new method to load the .keras file
+from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
 import os
@@ -10,8 +10,8 @@ app = Flask(__name__)
 # Set a secret key for session management (for example, 16-byte hex)
 app.secret_key = os.urandom(24)
 
-# Local path for the model file
-MODEL_PATH = 'my_model.keras'  # Path to the model .keras file
+# Local path for the model file (using .h5 format)
+MODEL_PATH = 'my_model.h5'  # Path to the model .h5 file
 
 # Global variable to store the model after loading
 model = None
@@ -22,8 +22,8 @@ def load_model_once():
     if model is None:
         if os.path.exists(MODEL_PATH):
             try:
-                # Load the model directly from the .keras file
-                model = tf.keras.models.load_model(MODEL_PATH)
+                # Load the model directly from the .h5 file
+                model = load_model(MODEL_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
                 print(f"Error loading model: {e}")
@@ -59,18 +59,22 @@ def classify_image():
 
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
+
+        # Resize the image to match model input (e.g., 224x224)
+        image = image.resize((180, 180))  # Resize image to 180x180, as expected by the model
+
         img_array = np.array(image)
 
-        img_array = tf.image.resize(img_array, [224, 224])  # Resize image
-        img_array = img_array / 255.0  # Normalize to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+        # Normalize to [0, 1] and ensure the correct shape
+        img_array = img_array / 255.0  # Normalize the pixel values to [0, 1]
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 180, 180, 3)
 
         # Make predictions
         predictions = model.predict(img_array)
         classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
         predicted_class = classNames[np.argmax(predictions)]
 
-        return render_template('index.html', prediction=predicted_class, image=image_filename)
+        return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
 
     except Exception as e:
         flash(f"Error in classifying the image: {e}", 'error')
