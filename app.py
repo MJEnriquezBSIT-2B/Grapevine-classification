@@ -45,7 +45,7 @@ def load_class_names():
                 class_names = file.read().splitlines()
         else:
             # Placeholder: define class names manually if file is not available
-            class_names = ["Class 1", "Class 2", "Class 3"]  # Replace with actual class names
+            class_names = ["Nazli", "Buzgulu", "Ak", "Dimnit", "Ala_Idris"]  # Replace with actual class names
     return class_names
 
 # Route for the home page
