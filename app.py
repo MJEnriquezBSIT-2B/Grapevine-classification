@@ -10,8 +10,8 @@ app = Flask(__name__)
 # Set a secret key for session management (for example, 16-byte hex)
 app.secret_key = os.urandom(24)
 
-# Local path for the model file
-MODEL_PATH = 'my_model.keras'  # Path to the model .keras file
+# Local path for the model file (now using my_model.h5)
+MODEL_PATH = 'my_model.h5'  # Path to the model .h5 file
 
 # Global variable to store the model after loading
 model = None
@@ -22,7 +22,7 @@ def load_model_once():
     if model is None:
         if os.path.exists(MODEL_PATH):
             try:
-                # Load the model directly from the .keras file
+                # Load the model directly from the .h5 file
                 model = tf.keras.models.load_model(MODEL_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
@@ -60,8 +60,8 @@ def classify_image():
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
 
-        # Resize the image to match model input (adjusted to 180x180)
-        image = image.resize((180, 180))
+        # Resize the image to match model input
+        image = image.resize((180, 180))  # Resize image to 180x180
 
         img_array = np.array(image)
 
@@ -74,7 +74,6 @@ def classify_image():
         classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
         predicted_class = classNames[np.argmax(predictions)]
 
-        # Pass prediction and image to the template
         return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
 
     except Exception as e:
