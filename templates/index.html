@@ -4,31 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Classification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            background-color: #e9f7ef;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .error {
+            color: red;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        img {
+            margin-top: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            color: #ff4d4d;
+        }
+
+    </style>
 </head>
 <body>
-    <h1>Upload an Image for Classification</h1>
+    <div class="container">
+        <h1>Upload an Image for Classification</h1>
 
-    <!-- Form for image upload -->
-    <form action="/classify" method="post" enctype="multipart/form-data">
-        <input type="file" name="image" required>
-        <button type="submit">Classify</button>
-    </form>
+        <!-- Form for image upload -->
+        <form action="/classify" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" required>
+            <button type="submit">Classify</button>
+        </form>
 
-    <!-- Display prediction and image if available -->
-    {% if prediction %}
-    <h2>Predicted Class: {{ prediction }}</h2>
-    <img src="{{ url_for('static', filename=image_filename) }}" alt="Uploaded Image" style="width: 300px;">
-    {% endif %}
+        <!-- Display prediction and image if available -->
+        {% if prediction %}
+        <div class="result">
+            <h2>Predicted Class: {{ prediction }}</h2>
+            <img src="{{ url_for('static', filename=image_filename) }}" alt="Uploaded Image">
+        </div>
+        {% endif %}
 
-    <!-- Display any flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <ul>
-        {% for category, message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
+        <!-- Display any flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul>
+            {% for category, message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+    </div>
 </body>
 </html>
