@@ -4,10 +4,11 @@ from tensorflow.keras.models import model_from_json
 from PIL import Image
 import numpy as np
 import os
+import json
 
 app = Flask(__name__)
 
-# Set a secret key for session management (for example, 16-byte hex)
+# Set a secret key for session management
 app.secret_key = os.urandom(24)
 
 # Paths to the model files
@@ -16,6 +17,7 @@ MODEL_H5_PATH = 'my_model.h5'      # Path to the model weights (H5 file)
 
 # Global variable to store the model after loading
 model = None
+class_names = None
 
 # Define a confidence threshold for classification accuracy (e.g., 0.7)
 CONFIDENCE_THRESHOLD = 0.7
@@ -41,6 +43,24 @@ def load_model_once():
             print(f"Model files '{MODEL_JSON_PATH}' or '{MODEL_H5_PATH}' not found.")
     return model
 
+# Function to extract class names from the model or a separate file
+def extract_class_names():
+    global class_names
+    if class_names is None:
+        try:
+            # Check if the model contains class names in metadata
+            if hasattr(model, 'metadata') and 'class_names' in model.metadata:
+                class_names = model.metadata['class_names']
+            else:
+                # If metadata is not available, fallback to a predefined list or file
+                with open('class_names.json', 'r') as file:
+                    class_names = json.load(file)
+                print("Class names loaded from the backup JSON file.")
+        except Exception as e:
+            print(f"Error extracting class names: {e}")
+            class_names = []
+    return class_names
+
 # Route for the home page
 @app.route('/')
 def index():
@@ -50,9 +70,10 @@ def index():
 @app.route('/classify', methods=['POST'])
 def classify_image():
     model = load_model_once()
+    extract_class_names()  # Extract class names from the model
 
-    if model is None:
-        flash("Model could not be loaded. Please check the logs for more details.", 'error')
+    if model is None or not class_names:
+        flash("Model or class names could not be loaded. Please check the logs for more details.", 'error')
         return redirect(url_for('index'))
 
     if 'image' not in request.files or request.files['image'].filename == '':
@@ -84,19 +105,19 @@ def classify_image():
         # Get the predicted class index
         predicted_class_index = np.argmax(predictions)
 
-        # List of class names as expected
-        classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
+        # Get the predicted class name
+        predicted_class = class_names[predicted_class_index]
 
         # Check prediction confidence
         confidence = predictions[0][predicted_class_index]
 
-        # If confidence is below threshold, return "Not available in dataset"
+        # If confidence is below threshold, show a message
         if confidence < CONFIDENCE_THRESHOLD:
-            predicted_class = "Not available in dataset"
+            prediction_message = f"Prediction: {predicted_class} (Low confidence)"
         else:
-            predicted_class = classNames[predicted_class_index]
+            prediction_message = f"Prediction: {predicted_class} (Confidence: {confidence*100:.2f}%)"
 
-        return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
+        return render_template('index.html', prediction=prediction_message, image_filename=image_filename)
 
     except Exception as e:
         flash(f"Error in classifying the image: {e}", 'error')
