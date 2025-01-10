@@ -8,11 +8,18 @@
 </head>
 <body>
     <h1>Grapevine Image Classification</h1>
+
     <form action="/classify" method="POST" enctype="multipart/form-data">
         <label for="image">Upload an image:</label>
         <input type="file" name="image" accept="image/*" required>
         <button type="submit">Classify</button>
     </form>
+
+    {% if classification_result %}
+        <h2>Classification Result</h2>
+        <p><strong>Class: </strong>{{ classification_result['class'] }}</p>
+        <p><strong>Confidence: </strong>{{ classification_result['confidence'] }}%</p>
+    {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
