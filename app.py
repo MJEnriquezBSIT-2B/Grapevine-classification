@@ -4,7 +4,6 @@ from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
 import os
-import json
 
 app = Flask(__name__)
 
@@ -12,11 +11,11 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # Path to the Keras model file
-MODEL_KERAS_PATH = 'my_model.keras'  # Path to the saved Keras model file
+MODEL_KERAS_PATH = 'model2.h5'  # Path to the saved Keras model file
 
 # Global variable to store the model after loading
 model = None
-class_names = None
+class_names = None  # Replace with your class names if available, e.g., ["class1", "class2"]
 
 # Define a confidence threshold for classification accuracy (e.g., 0.7)
 CONFIDENCE_THRESHOLD = 0.7
@@ -27,7 +26,6 @@ def load_model_once():
     if model is None:
         if os.path.exists(MODEL_KERAS_PATH):
             try:
-                # Load the entire model (architecture and weights) from the Keras file
                 model = load_model(MODEL_KERAS_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
@@ -36,24 +34,6 @@ def load_model_once():
         else:
             print(f"Model file '{MODEL_KERAS_PATH}' not found.")
     return model
-
-# Function to extract class names from the model or a separate file
-def extract_class_names():
-    global class_names
-    if class_names is None:
-        try:
-            # Check if the model contains class names in metadata
-            if hasattr(model, 'metadata') and 'class_names' in model.metadata:
-                class_names = model.metadata['class_names']
-            else:
-                # If metadata is not available, fallback to a predefined list or file
-                with open('class_names.json', 'r') as file:
-                    class_names = json.load(file)
-                print("Class names loaded from the backup JSON file.")
-        except Exception as e:
-            print(f"Error extracting class names: {e}")
-            class_names = []
-    return class_names
 
 # Route for the home page
 @app.route('/')
@@ -64,10 +44,9 @@ def index():
 @app.route('/classify', methods=['POST'])
 def classify_image():
     model = load_model_once()
-    extract_class_names()  # Extract class names from the model
 
-    if model is None or not class_names:
-        flash("Model or class names could not be loaded. Please check the logs for more details.", 'error')
+    if model is None:
+        flash("Model could not be loaded. Please check the logs for more details.", 'error')
         return redirect(url_for('index'))
 
     if 'image' not in request.files or request.files['image'].filename == '':
@@ -84,20 +63,24 @@ def classify_image():
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
 
-        # Resize the image to match model input (e.g., 180x180)
-        image = image.resize((180, 180))  # Resize image to 180x180, as expected by the model
+        # Resize the image to match model input (e.g., 150x150)
+        image = image.resize((150, 150))
 
         img_array = np.array(image)
 
         # Normalize to [0, 1] and ensure the correct shape
         img_array = img_array / 255.0  # Normalize the pixel values to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 180, 180, 3)
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 150, 150, 3)
 
         # Make predictions
         predictions = model.predict(img_array)
-        
+
         # Get the predicted class index
         predicted_class_index = np.argmax(predictions)
+
+        # Placeholder class names (Replace with actual class names if available)
+        if class_names is None:
+            class_names = [f"Class {i}" for i in range(predictions.shape[1])]
 
         # Get the predicted class name
         predicted_class = class_names[predicted_class_index]
