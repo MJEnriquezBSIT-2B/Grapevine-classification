@@ -14,31 +14,34 @@ app.secret_key = os.urandom(24)
 MODEL_JSON_PATH = 'model.json'  # Path to the model JSON file
 MODEL_H5_PATH = 'model.h5'      # Path to the model weights file
 
-# Function to load the model
+# Global variable to store the model after loading
+model = None
+
+# Function to load the model (only once when the app starts)
 def load_model():
-    if os.path.exists(MODEL_JSON_PATH) and os.path.exists(MODEL_H5_PATH):
-        try:
-            # Load the model architecture from the JSON file
-            with open(MODEL_JSON_PATH, "r") as json_file:
-                model_json = json_file.read()
-                model = model_from_json(model_json)
+    global model
+    if model is None:
+        if os.path.exists(MODEL_JSON_PATH) and os.path.exists(MODEL_H5_PATH):
+            try:
+                # Load the model architecture from the JSON file
+                with open(MODEL_JSON_PATH, "r") as json_file:
+                    model_json = json_file.read()
+                    model = model_from_json(model_json)
 
-            # Load the model weights from the .h5 file
-            model.load_weights(MODEL_H5_PATH)
-            return model
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            return None
-    else:
-        print("Model files not found.")
-        return None
-
+                # Load the model weights from the .h5 file
+                model.load_weights(MODEL_H5_PATH)
+                print("Model loaded successfully.")
+            except Exception as e:
+                print(f"Error loading model: {e}")
+                model = None
+        else:
+            print("Model files not found.")
+    return model
 
 # Route for the home page
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 # Route for image upload and classification
 @app.route('/classify', methods=['POST'])
@@ -73,12 +76,11 @@ def classify_image():
         classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
         predicted_class = classNames[np.argmax(predictions)]
 
-        return render_template('result.html', prediction=predicted_class, image=image_filename)
+        return render_template('index.html', prediction=predicted_class, image=image_filename)
 
     except Exception as e:
         flash(f"Error in classifying the image: {e}", 'error')
         return redirect(url_for('index'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)
