@@ -60,21 +60,22 @@ def classify_image():
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
 
-        # Resize the image to match model input
-        image = image.resize((180, 180))  # Resize image to 224x224
+        # Resize the image to match model input (adjusted to 180x180)
+        image = image.resize((180, 180))
 
         img_array = np.array(image)
 
         # Normalize to [0, 1] and ensure the correct shape
         img_array = img_array / 255.0  # Normalize the pixel values to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 224, 224, 3)
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 180, 180, 3)
 
         # Make predictions
         predictions = model.predict(img_array)
         classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
         predicted_class = classNames[np.argmax(predictions)]
 
-        return render_template('index.html', prediction=predicted_class, image=image_filename)
+        # Pass prediction and image to the template
+        return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
 
     except Exception as e:
         flash(f"Error in classifying the image: {e}", 'error')
