@@ -1,84 +1,34 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from PIL import Image
-import numpy as np
-import os
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classification</title>
+</head>
+<body>
+    <h1>Upload an Image for Classification</h1>
 
-app = Flask(__name__)
+    <!-- Form for image upload -->
+    <form action="/classify" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" required>
+        <button type="submit">Classify</button>
+    </form>
 
-# Set a secret key for session management (for example, 16-byte hex)
-app.secret_key = os.urandom(24)
+    <!-- Display prediction and image if available -->
+    {% if prediction %}
+    <h2>Predicted Class: {{ prediction }}</h2>
+    <img src="{{ url_for('static', filename=image_filename) }}" alt="Uploaded Image" style="width: 300px;">
+    {% endif %}
 
-# Local path for the model file (now using my_model.h5)
-MODEL_PATH = 'my_model.h5'  # Path to the model .h5 file
-
-# Global variable to store the model after loading
-model = None
-
-# Function to load the model (only once when the app starts)
-def load_model_once():
-    global model
-    if model is None:
-        if os.path.exists(MODEL_PATH):
-            try:
-                # Load the model directly from the .h5 file
-                model = tf.keras.models.load_model(MODEL_PATH)
-                print("Model loaded successfully.")
-            except Exception as e:
-                print(f"Error loading model: {e}")
-                model = None
-        else:
-            print(f"Model file '{MODEL_PATH}' not found.")
-    return model
-
-# Route for the home page
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Route for image upload and classification
-@app.route('/classify', methods=['POST'])
-def classify_image():
-    model = load_model_once()
-
-    if model is None:
-        flash("Model could not be loaded. Please check the logs for more details.", 'error')
-        return redirect(url_for('index'))
-
-    if 'image' not in request.files or request.files['image'].filename == '':
-        flash("No file uploaded or file not selected.", 'error')
-        return redirect(url_for('index'))
-
-    file = request.files['image']
-    try:
-        # Save the uploaded image
-        image_filename = file.filename
-        image_path = os.path.join('static', image_filename)
-        file.save(image_path)
-
-        # Process the image
-        image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
-
-        # Resize the image to match model input
-        image = image.resize((180, 180))  # Resize image to 180x180
-
-        img_array = np.array(image)
-
-        # Normalize to [0, 1] and ensure the correct shape
-        img_array = img_array / 255.0  # Normalize the pixel values to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 180, 180, 3)
-
-        # Make predictions
-        predictions = model.predict(img_array)
-        classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
-        predicted_class = classNames[np.argmax(predictions)]
-
-        return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
-
-    except Exception as e:
-        flash(f"Error in classifying the image: {e}", 'error')
-        return redirect(url_for('index'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    <!-- Display any flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul>
+        {% for category, message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</body>
+</html>
