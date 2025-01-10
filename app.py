@@ -61,7 +61,7 @@ def classify_image():
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
 
         # Resize the image to match model input
-        image = image.resize((224, 224))  # Resize image to 224x224
+        image = image.resize((180, 180))  # Resize image to 224x224
 
         img_array = np.array(image)
 
