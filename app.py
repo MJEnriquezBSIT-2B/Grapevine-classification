@@ -13,7 +13,7 @@ app.secret_key = os.urandom(24)
 # Path to the Keras model file
 MODEL_KERAS_PATH = 'model2.h5'  # Path to the saved Keras model file
 
-# Global variable to store the model after loading
+# Global variables to store the model and class names
 model = None
 class_names = None  # Replace with your class names if available, e.g., ["class1", "class2"]
 
@@ -35,6 +35,19 @@ def load_model_once():
             print(f"Model file '{MODEL_KERAS_PATH}' not found.")
     return model
 
+# Function to load the class names (replace with actual class names)
+def load_class_names():
+    global class_names
+    if class_names is None:
+        # Example of loading class names from a file (e.g., 'class_names.txt')
+        if os.path.exists('class_names.txt'):
+            with open('class_names.txt', 'r') as file:
+                class_names = file.read().splitlines()
+        else:
+            # Placeholder: define class names manually if file is not available
+            class_names = ["Class 1", "Class 2", "Class 3"]  # Replace with actual class names
+    return class_names
+
 # Route for the home page
 @app.route('/')
 def index():
@@ -49,6 +62,8 @@ def classify_image():
         flash("Model could not be loaded. Please check the logs for more details.", 'error')
         return redirect(url_for('index'))
 
+    load_class_names()  # Ensure class names are loaded
+
     if 'image' not in request.files or request.files['image'].filename == '':
         flash("No file uploaded or file not selected.", 'error')
         return redirect(url_for('index'))
@@ -62,9 +77,7 @@ def classify_image():
 
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
-
-        # Resize the image to match model input (e.g., 150x150)
-        image = image.resize((150, 150))
+        image = image.resize((150, 150))  # Resize image to match the model input
 
         img_array = np.array(image)
 
@@ -77,10 +90,6 @@ def classify_image():
 
         # Get the predicted class index
         predicted_class_index = np.argmax(predictions)
-
-        # Placeholder class names (Replace with actual class names if available)
-        if class_names is None:
-            class_names = [f"Class {i}" for i in range(predictions.shape[1])]
 
         # Get the predicted class name
         predicted_class = class_names[predicted_class_index]
