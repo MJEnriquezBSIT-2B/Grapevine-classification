@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import tensorflow as tf
-from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
 import os
@@ -11,9 +11,8 @@ app = Flask(__name__)
 # Set a secret key for session management
 app.secret_key = os.urandom(24)
 
-# Paths to the model files
-MODEL_JSON_PATH = 'my_model.json'  # Path to the model architecture (JSON file)
-MODEL_H5_PATH = 'my_model.h5'      # Path to the model weights (H5 file)
+# Path to the Keras model file
+MODEL_KERAS_PATH = 'my_model.keras'  # Path to the saved Keras model file
 
 # Global variable to store the model after loading
 model = None
@@ -26,21 +25,16 @@ CONFIDENCE_THRESHOLD = 0.7
 def load_model_once():
     global model
     if model is None:
-        if os.path.exists(MODEL_JSON_PATH) and os.path.exists(MODEL_H5_PATH):
+        if os.path.exists(MODEL_KERAS_PATH):
             try:
-                # Load the model architecture from the JSON file
-                with open(MODEL_JSON_PATH, 'r') as json_file:
-                    model_json = json_file.read()
-                    model = model_from_json(model_json)
-
-                # Load the weights into the model from the H5 file
-                model.load_weights(MODEL_H5_PATH)
+                # Load the entire model (architecture and weights) from the Keras file
+                model = load_model(MODEL_KERAS_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
                 print(f"Error loading model: {e}")
                 model = None
         else:
-            print(f"Model files '{MODEL_JSON_PATH}' or '{MODEL_H5_PATH}' not found.")
+            print(f"Model file '{MODEL_KERAS_PATH}' not found.")
     return model
 
 # Function to extract class names from the model or a separate file
