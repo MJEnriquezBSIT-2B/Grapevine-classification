@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import tensorflow as tf
-from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import load_model  # Using the new method to load the .keras file
 from PIL import Image
 import numpy as np
 import os
@@ -10,32 +10,26 @@ app = Flask(__name__)
 # Set a secret key for session management (for example, 16-byte hex)
 app.secret_key = os.urandom(24)
 
-# Local paths for the model files
-MODEL_JSON_PATH = 'model.json'  # Path to the model JSON file
-MODEL_H5_PATH = 'model.h5'      # Path to the model weights file
+# Local path for the model file
+MODEL_PATH = 'my_model.keras'  # Path to the model .keras file
 
 # Global variable to store the model after loading
 model = None
 
 # Function to load the model (only once when the app starts)
-def load_model():
+def load_model_once():
     global model
     if model is None:
-        if os.path.exists(MODEL_JSON_PATH) and os.path.exists(MODEL_H5_PATH):
+        if os.path.exists(MODEL_PATH):
             try:
-                # Load the model architecture from the JSON file
-                with open(MODEL_JSON_PATH, "r") as json_file:
-                    model_json = json_file.read()
-                    model = model_from_json(model_json)
-
-                # Load the model weights from the .h5 file
-                model.load_weights(MODEL_H5_PATH)
+                # Load the model directly from the .keras file
+                model = tf.keras.models.load_model(MODEL_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
                 print(f"Error loading model: {e}")
                 model = None
         else:
-            print("Model files not found.")
+            print(f"Model file '{MODEL_PATH}' not found.")
     return model
 
 # Route for the home page
@@ -46,7 +40,7 @@ def index():
 # Route for image upload and classification
 @app.route('/classify', methods=['POST'])
 def classify_image():
-    model = load_model()
+    model = load_model_once()
 
     if model is None:
         flash("Model could not be loaded. Please check the logs for more details.", 'error')
