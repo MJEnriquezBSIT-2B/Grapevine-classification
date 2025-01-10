@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import tensorflow as tf
-from tensorflow.keras.models import load_model  # Using the new method to load the .keras file
+from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
 import os
@@ -59,11 +59,15 @@ def classify_image():
 
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
+
+        # Resize the image to match model input
+        image = image.resize((224, 224))  # Resize image to 224x224
+
         img_array = np.array(image)
 
-        img_array = tf.image.resize(img_array, [224, 224])  # Resize image
-        img_array = img_array / 255.0  # Normalize to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+        # Normalize to [0, 1] and ensure the correct shape
+        img_array = img_array / 255.0  # Normalize the pixel values to [0, 1]
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension (1, 224, 224, 3)
 
         # Make predictions
         predictions = model.predict(img_array)
