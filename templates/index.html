@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grapevine Image Classification</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Image Classification</title>
 </head>
 <body>
-    <h1>Grapevine Image Classification</h1>
+    <h1>Upload an Image for Classification</h1>
 
-    <form action="/classify" method="POST" enctype="multipart/form-data">
-        <label for="image">Upload an image:</label>
-        <input type="file" name="image" accept="image/*" required>
+    <!-- Form for image upload -->
+    <form action="/classify" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" required>
         <button type="submit">Classify</button>
     </form>
 
-    {% if classification_result %}
-        <h2>Classification Result</h2>
-        <p><strong>Class: </strong>{{ classification_result['class'] }}</p>
-        <p><strong>Confidence: </strong>{{ classification_result['confidence'] }}%</p>
+    <!-- Display prediction and image if available -->
+    {% if prediction %}
+    <h2>Predicted Class: {{ prediction }}</h2>
+    <img src="{{ url_for('static', filename=image_filename) }}" alt="Uploaded Image" style="width: 300px;">
     {% endif %}
 
+    <!-- Display any flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <ul>
+    <ul>
         {% for category, message in messages %}
-            <li>{{ message }}</li>
+        <li>{{ message }}</li>
         {% endfor %}
-        </ul>
+    </ul>
     {% endif %}
     {% endwith %}
 </body>
