@@ -70,7 +70,7 @@ def classify_image():
 
         # Make predictions
         predictions = model.predict(img_array)
-        classNames = ['Ak', 'Ala_Idris', 'Buzgulu', 'Dimnit', 'Nazli']
+        classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
         predicted_class = classNames[np.argmax(predictions)]
 
         return render_template('result.html', prediction=predicted_class, image=image_filename)
