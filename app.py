@@ -17,6 +17,9 @@ MODEL_H5_PATH = 'my_model.h5'      # Path to the model weights (H5 file)
 # Global variable to store the model after loading
 model = None
 
+# Define a confidence threshold for classification accuracy (e.g., 0.7)
+CONFIDENCE_THRESHOLD = 0.7
+
 # Function to load the model (only once when the app starts)
 def load_model_once():
     global model
@@ -77,8 +80,21 @@ def classify_image():
 
         # Make predictions
         predictions = model.predict(img_array)
+        
+        # Get the predicted class index
+        predicted_class_index = np.argmax(predictions)
+
+        # List of class names as expected
         classNames = ['Nazli', 'Buzgulu', 'Ak', 'Dimnit', 'Ala_Idris']
-        predicted_class = classNames[np.argmax(predictions)]
+
+        # Check prediction confidence
+        confidence = predictions[0][predicted_class_index]
+
+        # If confidence is below threshold, return "Not available in dataset"
+        if confidence < CONFIDENCE_THRESHOLD:
+            predicted_class = "Not available in dataset"
+        else:
+            predicted_class = classNames[predicted_class_index]
 
         return render_template('index.html', prediction=predicted_class, image_filename=image_filename)
 
