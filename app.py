@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import tensorflow as tf
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import model_from_json
 from PIL import Image
 import numpy as np
 import os
@@ -10,8 +10,9 @@ app = Flask(__name__)
 # Set a secret key for session management (for example, 16-byte hex)
 app.secret_key = os.urandom(24)
 
-# Local path for the model file (using .h5 format)
-MODEL_PATH = 'my_model.h5'  # Path to the model .h5 file
+# Paths to the model files
+MODEL_JSON_PATH = 'my_model.json'  # Path to the model architecture (JSON file)
+MODEL_H5_PATH = 'my_model.h5'      # Path to the model weights (H5 file)
 
 # Global variable to store the model after loading
 model = None
@@ -20,16 +21,21 @@ model = None
 def load_model_once():
     global model
     if model is None:
-        if os.path.exists(MODEL_PATH):
+        if os.path.exists(MODEL_JSON_PATH) and os.path.exists(MODEL_H5_PATH):
             try:
-                # Load the model directly from the .h5 file
-                model = load_model(MODEL_PATH)
+                # Load the model architecture from the JSON file
+                with open(MODEL_JSON_PATH, 'r') as json_file:
+                    model_json = json_file.read()
+                    model = model_from_json(model_json)
+
+                # Load the weights into the model from the H5 file
+                model.load_weights(MODEL_H5_PATH)
                 print("Model loaded successfully.")
             except Exception as e:
                 print(f"Error loading model: {e}")
                 model = None
         else:
-            print(f"Model file '{MODEL_PATH}' not found.")
+            print(f"Model files '{MODEL_JSON_PATH}' or '{MODEL_H5_PATH}' not found.")
     return model
 
 # Route for the home page
@@ -60,7 +66,7 @@ def classify_image():
         # Process the image
         image = Image.open(image_path).convert('RGB')  # Ensure the image is in RGB format
 
-        # Resize the image to match model input (e.g., 224x224)
+        # Resize the image to match model input (e.g., 180x180)
         image = image.resize((180, 180))  # Resize image to 180x180, as expected by the model
 
         img_array = np.array(image)
